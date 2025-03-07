@@ -3,12 +3,31 @@ var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
-var mongoose = require('mongoose')
+var mongoose = require('mongoose');
+var dotenv = require('dotenv');
+
+dotenv.config();
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
+var productsRouter = require('./routes/products');
+var categoriesRouter = require('./routes/categories');
 
 var app = express();
+
+// Kết nối MongoDB
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/c5', {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+});
+
+mongoose.connection.on('connected', function() {
+  console.log("MongoDB connected successfully");
+});
+
+mongoose.connection.on('error', function(err) {
+  console.error("MongoDB connection error: ", err);
+});
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -22,12 +41,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
-app.use('/products', require('./routes/products'));
-//
-mongoose.connect('mongodb://localhost:27017/test');
-mongoose.connection.on('connected',function(){
-  console.log("connected hehehe");
-})
+app.use('/products', productsRouter);
+app.use('/categories', categoriesRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
@@ -36,11 +51,9 @@ app.use(function(req, res, next) {
 
 // error handler
 app.use(function(err, req, res, next) {
-  // set locals, only providing error in development
   res.locals.message = err.message;
   res.locals.error = req.app.get('env') === 'development' ? err : {};
 
-  // render the error page
   res.status(err.status || 500);
   res.render('error');
 });
